@@ -13,12 +13,14 @@ class Tybalt(commands.Bot):
 
         intents = discord.Intents.default()
         intents.message_content = True
+        intents.members = True
+        intents.presences = True
 
         self.config = DataStore(Config)
         self.data = DataStore(Data)
         self.permissions = Permissions(self)
 
-        super().__init__(command_prefix=('$'), intents=intents)
+        super().__init__(command_prefix=('$', '!'), intents=intents)
 
     def run(self):
         token = self.config('env').get('DISCORD_TOKEN')

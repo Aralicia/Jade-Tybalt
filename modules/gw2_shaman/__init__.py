@@ -5,6 +5,7 @@ import aiohttp
 import json
 import random
 import asyncio
+from tybalt import checks
 
 async def setup(bot):
     await bot.add_cog(GW2Shaman(bot))
@@ -18,6 +19,7 @@ class GW2Shaman(commands.Cog):
         self.bot = bot
 
     @commands.command(pass_context=True, no_pm=True)
+    @checks.has_prefix("$")
     async def when(self, ctx):
         """Give the expected date of the next patch
         *Uses that_shaman's timer*

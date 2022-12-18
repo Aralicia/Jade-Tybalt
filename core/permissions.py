@@ -17,6 +17,7 @@ class CorePermissionManager(commands.Cog):
 
     @commands.group(invoke_without_command=False, aliases=["perms"], guild_only=True)
     @checks.is_owner()
+    @checks.has_prefix("$")
     async def permissions(self, ctx):
         pass
 
@@ -39,8 +40,15 @@ class CorePermissionManager(commands.Cog):
         await ctx.send("Permissions Updated", reference=ctx.message)
 
     @permissions.command(name="list")
-    async def cmd_list(self, ctx, capability:str=None):
-        pass
+    async def cmd_list(self, ctx, capability:str):
+        result = [];
+        rules = self.bot.permissions.query(ctx.guild, capability)
+        for rule in rules:
+            result.append(rule.describe(ctx))
+        if len(result) == 0:
+            await ctx.send("No rules for {}".format(capability))
+        result.insert(0, "Rules for {}".format(capability))
+        await ctx.send("\n- ".join(result), reference=ctx.message)
 
     def parse_rule(self, ctx, action, rule):
         guild = None

@@ -97,6 +97,7 @@ class CoreModuleManager(commands.Cog):
 
     @commands.group(invoke_without_command=True, aliases=["mod","mods","module"])
     @checks.is_owner()
+    @checks.has_prefix("$")
     async def modules(self, ctx):
         await self.help(ctx)
 

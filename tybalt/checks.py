@@ -7,10 +7,16 @@ def is_owner():
         return str(ctx.author.id) == os.environ.get('DISCORD_OWNER')
     return commands.check(predicate)
 
-def user_can(permission, owner=None):
-    if owner is not None:
-        return is_owner() == owner
+def has_prefix(prefix):
     async def predicate(ctx):
+        return ctx.prefix == prefix
+    return commands.check(predicate)
+
+def user_can(permission, owner=True):
+    async def predicate(ctx):
+        if owner is not None:
+            if str(ctx.author.id) == os.environ.get('DISCORD_OWNER'):
+                return owner
         return ctx.bot.permissions.match(ctx, permission)
     return commands.check(predicate)
 
@@ -32,26 +38,44 @@ class Rule:
         # check for guild
         if ctx.guild is None:
             return False
-        elif ctx.guild.id != self.guild:
+        if str(ctx.guild.id) != self.guild:
             return False
-
         #check for source
-        if self.sourceType is not None:
-            if self.sourceType == "role":
-                return False
-            elif self.sourceType == "user":
-                return False
-            else:
-                return False
-
+        if self.check_source(ctx) == False:
+            print("wrong source")
+            return False
         #check for location
-        if self.locationType is not None:
-            if self.locationType == "channel":
-                return False
-            else:
-                return False
-
+        if self.check_location(ctx) == False:
+            print("wrong location")
+            return False
         return True
+
+    def describe(self, ctx):
+        description = "{} {}".format(self.action, self.permission)
+        if self.sourceType is not None:
+            source = "###"
+            if self.sourceType == "role":
+                role = ctx.guild.get_role(int(self.source))
+                if role is not None:
+                    source = "@{}".format(role.name)
+            elif self.sourceType == "group":
+                source = self.source
+            elif self.sourceType == "user":
+                user = ctx.guild.get_member(int(self.source))
+                if user is not None:
+                    if user.nick is not None:
+                        source = "@{} ({}#{})".format(user.nick, user.name, user.discriminator)
+                    else:
+                        source = "@{}#{}".format(user.name, user.discriminator)
+            description = "{} for {}".format(description, source)
+        if self.locationType is not None:
+            location = "###"
+            if self.locationType == "channel":
+                channel = ctx.guild.get_channel(int(self.location))
+                if channel is not None:
+                    location = channel.mention
+            description = "{} in {}".format(description, location)
+        return description
 
     def computePriority(self):
         priority = 0
@@ -60,10 +84,32 @@ class Rule:
         elif self.sourceType == "group":
             priority += 11
         elif self.sourceType == "user":
-            priority += 12
+            priority += 40
         if self.locationType == "channel":
             priority += 20
         self.priority = priority
+
+    def check_source(self, ctx):
+        if self.sourceType is None:
+            return True
+        if self.sourceType == "role" and self.user_has_role(ctx):
+            return True
+        if self.sourceType == "user" and str(ctx.author.id) == self.source:
+            return True
+        return False
+
+    def check_location(self, ctx):
+        if self.locationType is None:
+            return True
+        if self.locationType == "channel" and str(ctx.channel.id) == self.location:
+            return True
+        return False
+
+    def user_has_role(self, ctx):
+        for role in ctx.author.roles:
+            if str(role.id) == self.source:
+                return True
+        return False
 
 class Permissions:
 
@@ -90,8 +136,18 @@ class Permissions:
             self.data.db.commit()
 
     def clear(self, rule:Rule, commit=True):
-        query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType = ? and source = ? and locationType = ? and location = ?"
-        params = (rule.guild, rule.permission, rule.sourceType, rule.source, rule.locationType, rule.location)
+        if rule.sourceType is not None and rule.locationType is not None:
+            query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType = ? and source = ? and locationType = ? and location = ?"
+            params = (rule.guild, rule.permission, rule.sourceType, rule.source, rule.locationType, rule.location)
+        elif rule.sourceType is not None:
+            query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType = ? and source = ? and locationType IS NULL"
+            params = (rule.guild, rule.permission, rule.sourceType, rule.source)
+        elif rule.locationType is not None:
+            query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType IS NULL and locationType = ? and location = ?"
+            params = (rule.guild, rule.permission, rule.locationType, rule.location)
+        else:
+            query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType IS NULL locationType = IS NULL"
+            params = (rule.guild, rule.permission)
         self.data.db.execute(query, params)
         if commit:
             self.data.db.commit()
@@ -107,9 +163,11 @@ class Permissions:
         matches = []
         actions = set()
         for rule in self.query(ctx.guild, permission):
-            if currentPriority is not None && rule.priority < currentPriority:
+            print(rule.describe(ctx))
+            if currentPriority is not None and rule.priority < currentPriority:
                 break
             if rule.match(ctx):
+                print("Match!")
                 matches.append(rule)
                 actions.add(rule.action)
                 if currentPriority is None:
