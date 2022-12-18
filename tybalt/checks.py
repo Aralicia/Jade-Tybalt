@@ -146,7 +146,7 @@ class Permissions:
             query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType IS NULL and locationType = ? and location = ?"
             params = (rule.guild, rule.permission, rule.locationType, rule.location)
         else:
-            query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType IS NULL locationType = IS NULL"
+            query = "DELETE FROM rules WHERE guild = ? and permission = ? and sourceType IS NULL and locationType IS NULL"
             params = (rule.guild, rule.permission)
         self.data.db.execute(query, params)
         if commit:
