@@ -19,7 +19,7 @@ class GW2Shaman(commands.Cog):
         self.bot = bot
 
     @commands.command(pass_context=True, no_pm=True)
-    @checks.has_prefix("$")
+    @checks.user_can('when')
     async def when(self, ctx):
         """Give the expected date of the next patch
         *Uses that_shaman's timer*
