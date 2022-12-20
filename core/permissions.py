@@ -46,7 +46,8 @@ class CorePermissionManager(commands.Cog):
         for rule in rules:
             result.append(rule.describe(ctx))
         if len(result) == 0:
-            await ctx.send("No rules for {}".format(capability))
+            await ctx.send("No rules for {}".format(capability), reference=ctx.message)
+            return
         result.insert(0, "Rules for {}".format(capability))
         await ctx.send("\n- ".join(result), reference=ctx.message)
 
