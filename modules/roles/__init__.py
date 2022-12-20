@@ -33,7 +33,6 @@ class Roles(commands.Cog):
     ###
 
     @commands.command(pass_context=True, no_pm=True, aliases=["NA"])
-    @checks.has_prefix('$')
     async def na(self, ctx):
         """Join NA role
 
@@ -45,7 +44,6 @@ class Roles(commands.Cog):
                 removed="Well, you **were** a NA player.")
 
     @commands.command(pass_context=True, no_pm=True, aliases=["EU"])
-    @checks.has_prefix('$')
     async def eu(self, ctx):
         """Join EU role
 
@@ -57,7 +55,6 @@ class Roles(commands.Cog):
                 removed="Well, you **were** a EU player.")
 
     @commands.command(pass_context=True, no_pm=True, aliases=["F2P"])
-    @checks.has_prefix('$')
     async def f2p(self, ctx):
         """Join F2P role
 
@@ -73,7 +70,6 @@ class Roles(commands.Cog):
     ###
 
     @commands.command(pass_context=True, no_pm=True)
-    @checks.has_prefix('$')
     async def roles(self, ctx):
         """Display a message on which you can mention to change your roles (In dev)
 
