@@ -166,6 +166,8 @@ class Roles(commands.Cog):
             member = guild.get_member(payload.user_id)
             channel = guild.get_channel(payload.channel_id)
             emoji = payload.emoji
+            if channel is None:
+                return (None, None, None)
 
             if not member.bot:
                 message = await channel.fetch_message(payload.message_id)

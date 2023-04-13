@@ -46,7 +46,13 @@ class GW2Shaman(commands.Cog):
 
             ts = int(datetime.timestamp(date))
 
-            if random.randrange(1, 10) == 1: #10% chance of a joke
+            #10% chance of a joke
+            is_joke = random.randrange(1, 10) == 1
+
+            if ctx.message.author.id == 129987084617383936:
+                is_joke = True
+
+            if is_joke:
                 msg = random.choice([
                     "The next update will be `Soon™️`.",
                     "The next update is `on the table™️`.",
