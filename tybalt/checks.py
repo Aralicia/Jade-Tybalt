@@ -163,19 +163,26 @@ class Permissions:
         matches = []
         actions = set()
         for rule in self.query(ctx.guild, permission):
-            print(rule.describe(ctx))
             if currentPriority is not None and rule.priority < currentPriority:
                 break
             if rule.match(ctx):
-                print("Match!")
                 matches.append(rule)
                 actions.add(rule.action)
                 if currentPriority is None:
                     currentPriority = rule.priority
 
         if len(actions) == 0:
+            #no rule. try to find parent match
+            parent = self.get_parent_permission(permission)
+            if parent is not None:
+                return self.match(ctx, parent)
             return False #no rule. default to deny
         if len(actions) == 1:
             return actions.pop() == "allow"
         return False #conflicting rules with same priority match. default to deny
 
+    def get_parent_permission(self, permission):
+        dot = permission.rfind(".")
+        if dot == -1:
+            return None
+        return permission[0:dot]
