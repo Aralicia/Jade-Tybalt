@@ -186,6 +186,12 @@ class CoreModuleManager(commands.Cog):
     async def cmd_deactivate(self, ctx, extension_name:str):
         pass
 
+    @modules.command(name="sync")
+    async def cmd_sync(self, ctx):
+        synced = await self.bot.tree.sync()
+        gsynced = await self.bot.tree.sync(guild=ctx.guild)
+        await ctx.send("{} | {} commands synced".format(len(synced), len(gsynced)), reference=ctx.message)
+
     @modules.command(name="help")
     async def cmd_help(self, ctx):
         #TODO
