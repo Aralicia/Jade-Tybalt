@@ -1,9 +1,17 @@
 from discord.ext import commands
 import discord
+import asyncio
+from discord import app_commands
 from tybalt import checks
 from . import roles
 from .Role import Role
-from collections import namedtuple
+from collections import namedtuple  
+from discord.ui import Button
+from discord import ButtonStyle
+
+GUILD_GUILDWARS2 = discord.Object(144894829199884288)
+GUILD_TYBALTTEST = discord.Object(887752546473627690)
+
 
 async def setup(bot):
     await bot.add_cog(Roles(bot))
@@ -11,17 +19,38 @@ async def setup(bot):
 async def teardown(bot):
     await bot.remove_cog('Roles')
 
+class RolesGateView(discord.ui.View):
+    def __init__(self, bot, roles):
+        super().__init__()
+        self.bot = bot
+        self.roles = roles
+
+        for role in self.roles.values():
+            self.add_item(Button(custom_id="tyb_rolesgate_"+role.key, label=role.name, emoji=role.emoji))
+
+class RolesView(discord.ui.View):
+    def __init__(self, bot, roles, guild, user):
+        super().__init__()
+        self.bot = bot
+        self.roles = roles
+
+        for role in self.roles.values():
+            style = ButtonStyle.secondary
+            if role.owned(user, guild):
+                style = ButtonStyle.primary
+            self.add_item(Button(custom_id="tyb_roles_"+role.key, label=role.name, emoji=role.emoji, style=style))
+
 class Roles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.roles = {
             # Temporary fake role - actually works like Guest
-            'robot' : Role(
-                'guest',
-                'Bot',
-                '\N{ROBOT FACE}',
-                'You are a bot, and are trying to infiltrate the discord.'
-                ),
+            #'robot' : Role(
+            #    'guest',
+            #    'Bot',
+            #    '\N{ROBOT FACE}',
+            #    'You are a bot, and are trying to infiltrate the discord.'
+            #    ),
             roles.guest.key : roles.guest,
             roles.na.key : roles.na,
             roles.eu.key : roles.eu,
@@ -71,27 +100,38 @@ class Roles(commands.Cog):
 
     @commands.command(pass_context=True, no_pm=True)
     async def roles(self, ctx):
-        """Display a message on which you can mention to change your roles (In dev)
-
-        Example:
-        !roles
+        """Deprecated. Please use /roles instead.
         """
-        content = "> **User Roles**\n> Use the reactions below this message to gain or lose the following roles :";
+        content = "> This command is deprecated, please use /roles instead."
+        message = await ctx.send(content, reference=ctx.message);
+
+    @app_commands.command(name="roles", description="Change your roles")
+    @app_commands.guild_only()
+    async def slash_roles(self, interaction: discord.Interaction) -> None:
+        content = "Use the buttons below to change your roles"
+        
+        view = RolesView(self.bot, self.roles, interaction.user, interaction.guild)
+        await interaction.response.send_message(content, view=view, ephemeral=True)
+        #await view.wait()
+    
+    @commands.command(pass_context=True, no_pm=True)
+    @checks.is_owner()
+    @checks.has_prefix('$')
+    async def rolesgate(self, ctx):
+        content = "> **Welcome to the /r/Guildwars2 server.**\n> Please read the <#847640635048722432> and then use one the buttons below to chose a role and gain access to the discussion channels.\n> You can change this later in <#277148421327028224>; see the pinned messages there for details.\n> ";
+        components = []
 
         for role in self.roles.values():
             content = "{}\n> {} : {} - {}".format(content, role.emoji, role.name, role.description)
 
-        message = await ctx.send(content, reference=ctx.message);
-
-        for role in self.roles.values():
-            await message.add_reaction(role.emoji)
-
+        view = RolesGateView(self.bot, self.roles)
+        message = await ctx.send(content, view=view);
 
     ###
     ### Listeners
     ###
 
-    @commands.Cog.listener()
+    #@commands.Cog.listener()
     async def on_member_update(self, before, after):
         if before.roles == after.roles:
             return
@@ -106,6 +146,9 @@ class Roles(commands.Cog):
         elif 'eu' in changes.removed or 'na' in changes.removed:
             if 'eu' not in changes.left and 'na' not in changes.left:
                 addlist.append(self.roles['guest'].role(after.guild))
+        elif 'f2p' in changes.added:
+            if 'eu' not in changes.left and 'na' not in changes.left and 'guest' not in changes.left:
+                addlist.append(self.roles['guest'].role(after.guild))
         
         addlist = [i for i in addlist if i is not None]
         if len(addlist) > 0:
@@ -114,7 +157,7 @@ class Roles(commands.Cog):
         if len(remlist) > 0:
             await after.remove_roles(*remlist)
 
-    @commands.Cog.listener()
+    #@commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         message, member, role = await self.get_reaction_context(payload)
         if member is None or role is None:
@@ -124,6 +167,26 @@ class Roles(commands.Cog):
             await message.remove_reaction(payload.emoji, member)
         except :
             print("{}".format(sys.exc_info()[0]))
+
+
+    @commands.Cog.listener()
+    async def on_interaction(self, interaction):
+        if interaction.type == discord.InteractionType.component:
+            for role in self.roles.values():
+                # RolesGate Variant
+                if interaction.data['custom_id'] == "tyb_rolesgate_"+role.key:
+                    await role.toggle(interaction.user, interaction.guild)
+                    await interaction.response.defer()
+                # Slash Command Variant
+                if interaction.data['custom_id'] == "tyb_roles_"+role.key:
+                    await role.toggle(interaction.user, interaction.guild)
+                    await asyncio.sleep(1)
+
+                    # Get a new member object to get the new roles
+                    member = interaction.guild.get_member(interaction.user.id)
+                    
+                    view = RolesView(self.bot, self.roles, member, interaction.guild)
+                    await interaction.response.edit_message(view=view)
 
     ###
     ### Helpers

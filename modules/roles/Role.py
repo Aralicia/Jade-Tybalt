@@ -26,3 +26,8 @@ class Role:
             await target.remove_roles(role)
             return False
 
+    def owned(self, target, guild):
+        role = self.role(guild)
+        if role is None:
+            return False
+        return role in target.roles
