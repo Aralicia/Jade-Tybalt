@@ -155,3 +155,4 @@ cython_debug/
 # Tybalt Stuff
 data/config/
 data/sqlite/
+data/backup/
