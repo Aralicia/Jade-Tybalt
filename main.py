@@ -30,6 +30,7 @@ class Tybalt(commands.Bot):
         print(f'We have logged in as {self.user}')
         await self.load_extension('core.modules')
         await self.load_extension('core.permissions')
+        await self.load_extension('core.overrides')
         print('Bot ready')
 
     async def on_command_error(self, ctx, error):
