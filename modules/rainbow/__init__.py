@@ -31,12 +31,16 @@ class TybaltRainbow(commands.Cog):
     @commands.command(pass_context=True, no_pm=True)
     async def rainbow(self, ctx):
         message = ctx.message
+        channel = message.channel
         author = message.author
+        role = None
         if author.bot == False and message.guild is not None:
             rainbow_roles = self.get_rainbow_roles(message.guild)
             if rainbow_roles:
-                await self.rainbowize(author, rainbow_roles)
+                role = await self.rainbowize(author, rainbow_roles)
             await message.delete()
+            if role is not None:
+                await channel.send("{} is now {}".format(author.display_name, role.name))
 
     async def rainbowize(self, user, roles):
         for role in roles:
@@ -55,6 +59,7 @@ class TybaltRainbow(commands.Cog):
                 await user.edit(nick=nick)
             except:
                 pass
+        return role
 
 
     def get_rainbow_roles(self, guild):
