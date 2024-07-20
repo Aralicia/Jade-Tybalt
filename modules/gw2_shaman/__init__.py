@@ -49,7 +49,7 @@ class GW2Shaman(commands.Cog):
             #10% chance of a joke
             is_joke = random.randrange(1, 10) == 1
 
-            if ctx.message.author.id == 129987084617383936:
+            if ctx.message.author.id in [129987084617383936, 231551083317690368]:
                 is_joke = True
 
             if is_joke:

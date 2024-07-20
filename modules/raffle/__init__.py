@@ -12,7 +12,7 @@ async def teardown(bot):
 
 
 class TybaltRaffle(commands.Cog):
-    """Tybalt Rainbow."""
+    """Tybalt Raffle."""
 
     def __init__(self, bot):
         self.bot = bot
