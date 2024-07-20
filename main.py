@@ -20,7 +20,7 @@ class Tybalt(commands.Bot):
         self.data = DataStore(Data)
         self.permissions = Permissions(self)
 
-        super().__init__(command_prefix=('$', '!'), intents=intents)
+        super().__init__(command_prefix=('$', '!'), intents=intents, help_command=None)
 
     def run(self):
         token = self.config('env').get('DISCORD_TOKEN')
