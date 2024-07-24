@@ -42,7 +42,7 @@ class EmotesModule(commands.Cog):
         norm = norm_lower + norm_upper + norm_number + norm_extra
 
         flip_lower  = "ɐqɔpǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎz"
-        flip_upper  = "∀qƆpƎℲפHIſʞ˥WNOԀQᴚS┴∩ΛMX⅄Z"
+        flip_upper  = "∀ΣƆⱭƎℲפHIſK˥WNOԀQᴚS┴∩ΛMX⅄Z"
         flip_number = "0ІᘔƐᔭ59Ɫ86"
         flip_extra  = ")(]["
         flip = flip_lower + flip_upper + flip_number + flip_extra
